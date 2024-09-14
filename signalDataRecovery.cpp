@@ -310,6 +310,7 @@ void Read(void* buffer, uint64_t from, uint64_t count) {
     assert(bytesAccessed == count);
 }
 
+FILE* g_hdump = NULL;
 
 int parseMFT() {
 
@@ -322,6 +323,14 @@ int parseMFT() {
 
     Read(&bootSector, 0, 512);
 
+    if (NULL == g_hdump)
+        fopen_s(&g_hdump, "bootsector.hex", "w");
+    if (g_hdump)
+    {
+        fwrite(&bootSector, 1, 512, g_hdump);
+        fflush(g_hdump);
+        fclose(g_hdump);
+    }
     uint64_t bytesPerCluster = bootSector.bytesPerSector * bootSector.sectorsPerCluster;
 
     Read(&mftFile, bootSector.mftStart * bytesPerCluster, MFT_FILE_SIZE);
