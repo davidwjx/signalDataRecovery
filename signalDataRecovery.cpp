@@ -310,7 +310,18 @@ void Read(void* buffer, uint64_t from, uint64_t count) {
     assert(bytesAccessed == count);
 }
 
-FILE* g_hdump = NULL;
+void dump2file(const char* filename, const unsigned char* buffer, const int size)
+{
+    FILE* hdump = NULL;
+    if (NULL == hdump)
+        fopen_s(&hdump, filename, "w");
+    if (hdump)
+    {
+        fwrite(buffer, 1, size, hdump);
+        fflush(hdump);
+        fclose(hdump);
+    }
+}
 
 int parseMFT() {
 
@@ -323,20 +334,17 @@ int parseMFT() {
 
     Read(&bootSector, 0, 512);
 
-    if (NULL == g_hdump)
-        fopen_s(&g_hdump, "bootsector.hex", "w");
-    if (g_hdump)
-    {
-        fwrite(&bootSector, 1, 512, g_hdump);
-        fflush(g_hdump);
-        fclose(g_hdump);
-    }
+    dump2file("bootsector.hex", (const unsigned char*)&bootSector, 512);
+
     uint64_t bytesPerCluster = bootSector.bytesPerSector * bootSector.sectorsPerCluster;
 
-    Read(&mftFile, bootSector.mftStart * bytesPerCluster, MFT_FILE_SIZE);
+    Read(mftFile, bootSector.mftStart * bytesPerCluster, MFT_FILE_SIZE);
+
+    dump2file("mft.hex", (const unsigned char*)mftFile, MFT_FILE_SIZE);
 
     FileRecordHeader* fileRecord = (FileRecordHeader*)mftFile;
     AttributeHeader* attribute = (AttributeHeader*)(mftFile + fileRecord->firstAttributeOffset);
+
     NonResidentAttributeHeader* dataAttribute = nullptr;
     uint64_t approximateRecordCount = 0;
     assert(fileRecord->magic == 0x454C4946);
@@ -363,7 +371,9 @@ int parseMFT() {
         uint64_t length = 0, offset = 0;
 
         for (int i = 0; i < dataRun->lengthFieldBytes; i++) {
-            length |= (uint64_t)(((uint8_t*)dataRun)[1 + i]) << (i * 8);
+            uint8_t c = ((uint8_t*)dataRun)[1 + i];
+            printf("%d %c\n", c, c);
+            length |= (uint64_t)(c) << (i * 8);
         }
 
         for (int i = 0; i < dataRun->offsetFieldBytes; i++) {
