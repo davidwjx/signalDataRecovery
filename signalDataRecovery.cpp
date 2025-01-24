@@ -1,171 +1,28 @@
 ﻿// signalDataRecovery.cpp : 定义应用程序的入口点。
 //
 
-#include "framework.h"
-#include "signalDataRecovery.h"
+#include <windows.h>
+#include <winioctl.h>
 
-#define MAX_LOADSTRING 100
-
-// 全局变量:
-HINSTANCE hInst;                                // 当前实例
-WCHAR szTitle[MAX_LOADSTRING];                  // 标题栏文本
-WCHAR szWindowClass[MAX_LOADSTRING];            // 主窗口类名
-
-// 此代码模块中包含的函数的前向声明:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-
-
-
-
-//
-//  函数: MyRegisterClass()
-//
-//  目标: 注册窗口类。
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-    WNDCLASSEXW wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SIGNALDATARECOVERY));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_SIGNALDATARECOVERY);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-
-//
-//   函数: InitInstance(HINSTANCE, int)
-//
-//   目标: 保存实例句柄并创建主窗口
-//
-//   注释:
-//
-//        在此函数中，我们在全局变量中保存实例句柄并
-//        创建和显示主程序窗口。
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   hInst = hInstance; // 将实例句柄存储在全局变量中
-
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
-//  函数: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  目标: 处理主窗口的消息。
-//
-//  WM_COMMAND  - 处理应用程序菜单
-//  WM_PAINT    - 绘制主窗口
-//  WM_DESTROY  - 发送退出消息并返回
-//
-//
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // 分析菜单选择:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: 在此处添加使用 hdc 的任何绘图代码...
-            EndPaint(hWnd, &ps);
-        }
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
-}
-
-// “关于”框的消息处理程序。
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
-}
-
-
-/*
-    This is free and unencumbered software released into the public domain.
-    Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
-    software, either in source code form or as a compiled binary, for any purpose,
-    commercial or non-commercial, and by any means.
-    In jurisdictions that recognize copyright laws, the author or authors of this
-    software dedicate any and all copyright interest in the software to the public
-    domain. We make this dedication for the benefit of the public at large and to
-    the detriment of our heirs and successors. We intend this dedication to be an
-    overt act of relinquishment in perpetuity of all present and future rights to
-    this software under copyright law.
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+// C 运行时头文件
+#include <stdlib.h>
+#include <malloc.h>
+#include <memory.h>
+#include <tchar.h>
 
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
-#include <windows.h>
+
+// C++ header files
+#include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+
+#include "signalDataRecovery.h"
+
+#define IOCTL_DISK_GET_DRIVE_LAYOUT 0x00070050  // 获取磁盘分区布局
 
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
@@ -367,6 +224,9 @@ int parseMFT() {
     RunHeader* dataRun = (RunHeader*)((uint8_t*)dataAttribute + dataAttribute->dataRunsOffset);
     uint64_t clusterNumber = 0, recordsProcessed = 0;
 
+    FILE* hfiles = NULL;
+    char filename[1024];
+    fopen_s(&hfiles, "allfiles.txt", "w");
     while (((uint8_t*)dataRun - (uint8_t*)dataAttribute) < dataAttribute->length && dataRun->lengthFieldBytes) {
         uint64_t length = 0, offset = 0;
 
@@ -377,7 +237,8 @@ int parseMFT() {
         }
 
         for (int i = 0; i < dataRun->offsetFieldBytes; i++) {
-            offset |= (uint64_t)(((uint8_t*)dataRun)[1 + dataRun->lengthFieldBytes + i]) << (i * 8);
+            uint8_t c = ((uint8_t*)dataRun)[1 + dataRun->lengthFieldBytes + i];
+            offset |= (uint64_t)(c) << (i * 8);
         }
 
         if (offset & ((uint64_t)1 << (dataRun->offsetFieldBytes * 8 - 1))) {
@@ -390,6 +251,7 @@ int parseMFT() {
         dataRun = (RunHeader*)((uint8_t*)dataRun + 1 + dataRun->lengthFieldBytes + dataRun->offsetFieldBytes);
 
         uint64_t filesRemaining = length * bytesPerCluster / MFT_FILE_SIZE;
+        uint64_t remained = length * bytesPerCluster % MFT_FILE_SIZE;
         uint64_t positionInBlock = 0;
 
         while (filesRemaining) {
@@ -407,29 +269,43 @@ int parseMFT() {
 
                 FileRecordHeader* fileRecord = (FileRecordHeader*)(mftBuffer + MFT_FILE_SIZE * i);
                 recordsProcessed++;
-
-                if (!fileRecord->inUse) continue;
-
+                #if (1)
+                    if (/*38912 == filesRemaining*/ /*clusterNumber == 786432 && positionInBlock == 67108864 &&*/ 33844 == fileRecord->recordNumber/* && 63949 == recordsProcessed */ )
+                        dump2file("testfile-deleted.mft", (const uint8_t*)(mftBuffer + MFT_FILE_SIZE * i), MFT_FILE_SIZE);
+                #endif
+                if (!fileRecord->inUse)
+                {
+                    continue;
+                }
                 AttributeHeader* attribute = (AttributeHeader*)((uint8_t*)fileRecord + fileRecord->firstAttributeOffset);
-                assert(fileRecord->magic == 0x454C4946);
+                //assert(fileRecord->magic == 0x454C4946);
 
                 while ((uint8_t*)attribute - (uint8_t*)fileRecord < MFT_FILE_SIZE) {
-                    if (attribute->attributeType == 0x30) {
-                        FileNameAttributeHeader* fileNameAttribute = (FileNameAttributeHeader*)attribute;
 
+                    if (attribute->attributeType == 0x30) {
+
+                        FileNameAttributeHeader* fileNameAttribute = (FileNameAttributeHeader*)attribute;
                         if (fileNameAttribute->namespaceType != 2 && !fileNameAttribute->nonResident) {
                             File file = {};
-                            file.parent = fileNameAttribute->parentRecordNumber;
+                            //file.parent = fileNameAttribute->parentRecordNumber;
                             file.name = DuplicateName(fileNameAttribute->fileName, fileNameAttribute->fileNameLength);
-                            printf("file: %s\n", file.name);
-                            uint64_t oldLength = arrlenu(files);
+                            //printf("file: %s\n", file.name);
+                            sprintf_s(filename, 1024, "%s, isDir: %d, flag: %d, nameSpace: %d\n", file.name, fileRecord->isDirectory, fileNameAttribute->flags, fileNameAttribute->namespaceType);
+                            fwrite(filename, 1, strlen(filename), hfiles);
+                            fflush(hfiles);
 
-                            if (fileRecord->recordNumber >= oldLength) {
-                                arrsetlen(files, fileRecord->recordNumber + 1);
-                                memset(files + oldLength, 0, sizeof(File) * (fileRecord->recordNumber - oldLength));
+                            if (strcmp(file.name, "asdfasdfsadfsad.txt") == 0)
+                            {
+                                dump2file("testfile.mft", (const uint8_t*)(mftBuffer + MFT_FILE_SIZE * i), MFT_FILE_SIZE);
                             }
+                            //uint64_t oldLength = arrlenu(files);
 
-                            files[fileRecord->recordNumber] = file;
+                            //if (fileRecord->recordNumber >= oldLength) {
+                            //    arrsetlen(files, fileRecord->recordNumber + 1);
+                            //    memset(files + oldLength, 0, sizeof(File) * (fileRecord->recordNumber - oldLength));
+                            //}
+
+                            //files[fileRecord->recordNumber] = file;
                         }
                     }
                     else if (attribute->attributeType == 0xFFFFFFFF) {
@@ -441,7 +317,7 @@ int parseMFT() {
             }
         }
     }
-
+    fclose(hfiles);
     //fprintf(stderr, "\nFound %lld files.\n", arrlen(files));
     int64_t num = arrlen(files);
     printf("\nFound %lld files.\n", num);
@@ -450,41 +326,89 @@ int parseMFT() {
 }
 
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-    _In_opt_ HINSTANCE hPrevInstance,
-    _In_ LPWSTR    lpCmdLine,
-    _In_ int       nCmdShow)
+// 读取磁盘的分区布局
+void ReadPartitionTable(const std::string& diskPath) 
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // TODO: 在此处放置代码。
-
-    // 初始化全局字符串
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_SIGNALDATARECOVERY, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
-
-    // 执行应用程序初始化:
-    if (!InitInstance(hInstance, nCmdShow))
-    {
-        return FALSE;
+    HANDLE hDisk = CreateFileA(diskPath.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (hDisk == INVALID_HANDLE_VALUE) {
+        std::cerr << "无法打开磁盘设备: " << diskPath << std::endl;
+        return;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_SIGNALDATARECOVERY));
+    DWORD bytesReturned = 0;
+    unsigned char buff[1024] = {0};
 
-    MSG msg;
+    BOOL result = DeviceIoControl(
+        hDisk,
+        IOCTL_DISK_GET_DRIVE_LAYOUT,
+        NULL,
+        0,
+        buff,
+        sizeof(buff),
+        &bytesReturned,
+        NULL
+    );
 
-    parseMFT();
-    // 主消息循环:
-    while (GetMessage(&msg, nullptr, 0, 0))
+    if (result) 
     {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        std::cout << "分区布局信息：\n";
+        DRIVE_LAYOUT_INFORMATION_EX* driveLayout = reinterpret_cast<DRIVE_LAYOUT_INFORMATION_EX*>(buff);
+        for (DWORD i = 0; i < driveLayout->PartitionCount; ++i) 
         {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            PARTITION_INFORMATION_EX partition = driveLayout->PartitionEntry[i];
+            std::cout << "分区 " << i + 1 << ":\n";
+            std::cout << "  分区类型: " << partition.PartitionStyle << "\n";
+            std::cout << "  起始LBA: " << partition.StartingOffset.QuadPart << "\n";
+            std::cout << "  大小: " << partition.PartitionLength.QuadPart << "\n";
+        }
+    }
+    else 
+    {
+        DWORD err = GetLastError();
+        if (ERROR_INSUFFICIENT_BUFFER == err)
+        {
+            unsigned char buffer[2048];
+            result = DeviceIoControl(
+                hDisk,
+                IOCTL_DISK_GET_DRIVE_LAYOUT_EX,
+                NULL,
+                0,
+                buffer,
+                sizeof(buffer),
+                &bytesReturned,
+                NULL
+            );
+
+            if (result) {
+                // 解析返回的分区布局信息
+                DRIVE_LAYOUT_INFORMATION_EX* extendedLayout = reinterpret_cast<DRIVE_LAYOUT_INFORMATION_EX*>(buffer);
+                std::cout << "分区布局信息：\n";
+                for (DWORD i = 0; i < extendedLayout->PartitionCount; ++i) {
+                    PARTITION_INFORMATION_EX partition = extendedLayout->PartitionEntry[i];
+                    std::cout << "分区 " << i + 1 << ":\n";
+                    std::cout << "  分区类型: " << partition.PartitionStyle << "\n";
+                    std::cout << "  起始LBA: " << partition.StartingOffset.QuadPart << "\n";
+                    std::cout << "  大小: " << partition.PartitionLength.QuadPart << "\n";
+                }
+            }
+            else 
+            {
+                std::cerr << "获取分区布局失败，错误码：" << GetLastError() << std::endl;
+            }
         }
     }
 
-    return (int)msg.wParam;
+    CloseHandle(hDisk);
+}
+
+int main() 
+{
+
+    // 物理磁盘路径，Windows 中通常是 \\\\.\\PhysicalDriveX
+    std::string diskPath = "\\\\.\\PhysicalDrive0"; // 这里以磁盘 0 为例
+    ReadPartitionTable(diskPath);
+
+    //parseMFT();
+    return 0;
 }

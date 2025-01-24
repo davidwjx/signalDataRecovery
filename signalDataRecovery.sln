@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "signalDataRecovery", "signalDataRecovery.vcxproj", "{8BD5C718-BB21-418D-9CE1-F32608EB7512}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "signalDataRecovery", "signalDataRecovery.vcxproj", "{BEA4D600-1076-48FB-8386-302260CFCA68}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,19 +13,19 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Debug|x64.ActiveCfg = Debug|x64
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Debug|x64.Build.0 = Debug|x64
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Debug|x86.ActiveCfg = Debug|Win32
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Debug|x86.Build.0 = Debug|Win32
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Release|x64.ActiveCfg = Release|x64
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Release|x64.Build.0 = Release|x64
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Release|x86.ActiveCfg = Release|Win32
-		{8BD5C718-BB21-418D-9CE1-F32608EB7512}.Release|x86.Build.0 = Release|Win32
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Debug|x64.ActiveCfg = Debug|x64
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Debug|x64.Build.0 = Debug|x64
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Debug|x86.ActiveCfg = Debug|Win32
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Debug|x86.Build.0 = Debug|Win32
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Release|x64.ActiveCfg = Release|x64
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Release|x64.Build.0 = Release|x64
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Release|x86.ActiveCfg = Release|Win32
+		{BEA4D600-1076-48FB-8386-302260CFCA68}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {BAD89395-AB5A-4734-A209-00A2B120242D}
+		SolutionGuid = {FF159DFC-ACFC-4308-8868-1AF3B798CC66}
 	EndGlobalSection
 EndGlobal
