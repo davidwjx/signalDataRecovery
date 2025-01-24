@@ -402,6 +402,36 @@ void ReadPartitionTable(const std::string& diskPath)
     CloseHandle(hDisk);
 }
 
+// 恢复分区表条目的简单逻辑
+void RestorePartitionEntry(HANDLE hDisk, PARTITION_INFORMATION_EX& partition) 
+{
+    DWORD bytesReturned = 0;
+    BOOL result = DeviceIoControl(
+        hDisk,
+        IOCTL_DISK_SET_DRIVE_LAYOUT_EX,
+        &partition,
+        sizeof(partition),
+        NULL,
+        0,
+        &bytesReturned,
+        NULL
+    );
+
+    if (result) 
+    {
+        std::cout << "分区恢复成功！" << std::endl;
+    }
+    else 
+    {
+        std::cerr << "恢复分区失败！" << std::endl;
+    }
+}
+
+void CheckAndFixFileSystem(const std::string& driveLetter) {
+    std::string command = "chkdsk " + driveLetter + " /f";
+    system(command.c_str());  // 执行 chkdsk 命令
+}
+
 int main() 
 {
 
