@@ -330,101 +330,133 @@ int parseMFT() {
 void ReadPartitionTable(const std::string& diskPath) 
 {
 
-    HANDLE hDisk = CreateFileA(diskPath.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    HANDLE hDisk = CreateFileA(diskPath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
     if (hDisk == INVALID_HANDLE_VALUE) {
-        std::cerr << "无法打开磁盘设备: " << diskPath << std::endl;
+        std::cerr << "无法打开磁盘，错误代码: " << GetLastError() << std::endl;
         return;
     }
 
-    DWORD bytesReturned = 0;
-    unsigned char buff[1024] = {0};
-
-    BOOL result = DeviceIoControl(
-        hDisk,
-        IOCTL_DISK_GET_DRIVE_LAYOUT,
+    // 准备缓冲区接收布局信息
+    BYTE layoutBuffer[1024];
+    DWORD bytesReturned;
+    if (!DeviceIoControl(hDisk,
+        IOCTL_DISK_GET_DRIVE_LAYOUT_EX,
         NULL,
         0,
-        buff,
-        sizeof(buff),
+        layoutBuffer,
+        sizeof(layoutBuffer),
         &bytesReturned,
-        NULL
-    );
-
-    if (result) 
-    {
-        std::cout << "分区布局信息：\n";
-        DRIVE_LAYOUT_INFORMATION_EX* driveLayout = reinterpret_cast<DRIVE_LAYOUT_INFORMATION_EX*>(buff);
-        for (DWORD i = 0; i < driveLayout->PartitionCount; ++i) 
-        {
-            PARTITION_INFORMATION_EX partition = driveLayout->PartitionEntry[i];
-            std::cout << "分区 " << i + 1 << ":\n";
-            std::cout << "  分区类型: " << partition.PartitionStyle << "\n";
-            std::cout << "  起始LBA: " << partition.StartingOffset.QuadPart << "\n";
-            std::cout << "  大小: " << partition.PartitionLength.QuadPart << "\n";
-        }
+        NULL)) {
+        std::cerr << "获取磁盘布局失败，错误代码: " << GetLastError() << std::endl;
+        CloseHandle(hDisk);
+        return;
     }
-    else 
-    {
-        DWORD err = GetLastError();
-        if (ERROR_INSUFFICIENT_BUFFER == err)
-        {
-            unsigned char buffer[2048];
-            result = DeviceIoControl(
-                hDisk,
-                IOCTL_DISK_GET_DRIVE_LAYOUT_EX,
-                NULL,
-                0,
-                buffer,
-                sizeof(buffer),
-                &bytesReturned,
-                NULL
-            );
 
-            if (result) {
-                // 解析返回的分区布局信息
-                DRIVE_LAYOUT_INFORMATION_EX* extendedLayout = reinterpret_cast<DRIVE_LAYOUT_INFORMATION_EX*>(buffer);
-                std::cout << "分区布局信息：\n";
-                for (DWORD i = 0; i < extendedLayout->PartitionCount; ++i) {
-                    PARTITION_INFORMATION_EX partition = extendedLayout->PartitionEntry[i];
-                    std::cout << "分区 " << i + 1 << ":\n";
-                    std::cout << "  分区类型: " << partition.PartitionStyle << "\n";
-                    std::cout << "  起始LBA: " << partition.StartingOffset.QuadPart << "\n";
-                    std::cout << "  大小: " << partition.PartitionLength.QuadPart << "\n";
-                }
-            }
-            else 
-            {
-                std::cerr << "获取分区布局失败，错误码：" << GetLastError() << std::endl;
-            }
-        }
+    // 解析布局信息
+    DRIVE_LAYOUT_INFORMATION_EX* layout = reinterpret_cast<DRIVE_LAYOUT_INFORMATION_EX*>(layoutBuffer);
+    std::cout << "分区样式: " << (layout->PartitionStyle == PARTITION_STYLE_MBR ? "MBR" : "GPT") << std::endl;
+    std::cout << "分区数量: " << layout->PartitionCount << std::endl;
+
+    // 打印每个分区的详细信息
+    for (DWORD i = 0; i < layout->PartitionCount; ++i) {
+        PARTITION_INFORMATION_EX& partition = layout->PartitionEntry[i];
+        std::cout << "分区 " << i
+            << ": 编号 " << partition.PartitionNumber
+            << ", 起始偏移: " << partition.StartingOffset.QuadPart
+            << ", 长度: " << partition.PartitionLength.QuadPart<< " 字节" << std::endl;
     }
 
     CloseHandle(hDisk);
 }
 
 // 恢复分区表条目的简单逻辑
-void RestorePartitionEntry(HANDLE hDisk, PARTITION_INFORMATION_EX& partition) 
+int  RestorePartitionEntry(const std::string& diskPath)
 {
-    DWORD bytesReturned = 0;
-    BOOL result = DeviceIoControl(
-        hDisk,
+    HANDLE hDevice = CreateFileA(diskPath.c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL);
+    if (hDevice == INVALID_HANDLE_VALUE) {
+        std::cerr << "无法打开磁盘，错误代码: " << GetLastError() << std::endl;
+        return 1;
+    }
+
+    // 获取当前磁盘布局
+    BYTE layoutBuffer[2048]; // 增加缓冲区大小以容纳更多分区
+    DWORD bytesReturned;
+    if (!DeviceIoControl(hDevice,
+        IOCTL_DISK_GET_DRIVE_LAYOUT_EX,
+        NULL,
+        0,
+        layoutBuffer,
+        sizeof(layoutBuffer),
+        &bytesReturned,
+        NULL)) {
+        std::cerr << "获取磁盘布局失败，错误代码: " << GetLastError() << std::endl;
+        CloseHandle(hDevice);
+        return 1;
+    }
+
+    // 解析当前布局
+    DRIVE_LAYOUT_INFORMATION_EX* layout = reinterpret_cast<DRIVE_LAYOUT_INFORMATION_EX*>(layoutBuffer);
+    if (layout->PartitionStyle != PARTITION_STYLE_GPT) {
+        std::cerr << "仅支持GPT分区样式" << std::endl;
+        CloseHandle(hDevice);
+        return 1;
+    }
+
+    // 创建新分区表（复制现有布局并添加新分区）
+    DWORD newPartitionCount = 3; // 固定为3个分区
+    size_t newLayoutSize = sizeof(DRIVE_LAYOUT_INFORMATION_EX) + sizeof(PARTITION_INFORMATION_EX) * (newPartitionCount - 1);
+    BYTE* newLayoutBuffer = new BYTE[newLayoutSize];
+    DRIVE_LAYOUT_INFORMATION_EX* newLayout = reinterpret_cast<DRIVE_LAYOUT_INFORMATION_EX*>(newLayoutBuffer);
+
+    // 初始化新布局
+    memcpy(newLayout, layout, sizeof(DRIVE_LAYOUT_INFORMATION_EX)); // 复制基本信息
+    newLayout->PartitionCount = newPartitionCount;
+
+    // 分区0：保留原有的保留分区（编号1）
+    memcpy(&newLayout->PartitionEntry[0], &layout->PartitionEntry[0], sizeof(PARTITION_INFORMATION_EX));
+
+    // 分区1：新恢复的分区（编号2，排在前面）
+    PARTITION_INFORMATION_EX& recoveredPartition = newLayout->PartitionEntry[1];
+    recoveredPartition.PartitionStyle = PARTITION_STYLE_GPT;
+    recoveredPartition.StartingOffset.QuadPart = 16777216;         // 新分区起始偏移
+    recoveredPartition.PartitionLength.QuadPart = 1000197849088;   // 新分区长度
+    recoveredPartition.PartitionNumber = 2;                        // 编号2
+    recoveredPartition.Gpt.PartitionType = { 0xEBD0A0A2, 0xB9E5, 0x4433, {0x87, 0xC0, 0x68, 0xB6, 0xB7, 0x26, 0x99, 0xC7} }; // NTFS GUID
+    recoveredPartition.Gpt.Attributes = 0;
+    wcscpy_s(recoveredPartition.Gpt.Name, L"Recovered");
+
+    // 分区2：原有的931GB分区（编号3，移到后面）
+    PARTITION_INFORMATION_EX& originalPartition = newLayout->PartitionEntry[2];
+    memcpy(&originalPartition, &layout->PartitionEntry[1], sizeof(PARTITION_INFORMATION_EX)); // 复制原有分区1的信息
+    originalPartition.PartitionNumber = 3; // 更新编号为3
+
+    // 更新磁盘布局
+    if (!DeviceIoControl(hDevice,
         IOCTL_DISK_SET_DRIVE_LAYOUT_EX,
-        &partition,
-        sizeof(partition),
+        newLayoutBuffer,
+        static_cast<DWORD>(newLayoutSize),
         NULL,
         0,
         &bytesReturned,
-        NULL
-    );
+        NULL)) {
+        std::cerr << "更新分区表失败，错误代码: " << GetLastError() << std::endl;
+        delete[] newLayoutBuffer;
+        CloseHandle(hDevice);
+        return 1;
+    }
 
-    if (result) 
-    {
-        std::cout << "分区恢复成功！" << std::endl;
-    }
-    else 
-    {
-        std::cerr << "恢复分区失败！" << std::endl;
-    }
+    std::cout << "分区表更新成功，请检查磁盘管理" << std::endl;
+
+    // 清理
+    delete[] newLayoutBuffer;
+    CloseHandle(hDevice);
+    return 0;
 }
 
 void CheckAndFixFileSystem(const std::string& driveLetter) {
@@ -438,6 +470,7 @@ int main()
     // 物理磁盘路径，Windows 中通常是 \\\\.\\PhysicalDriveX
     std::string diskPath = "\\\\.\\PhysicalDrive0"; // 这里以磁盘 0 为例
     ReadPartitionTable(diskPath);
+    //RestorePartitionEntry(diskPath);
 
     //parseMFT();
     return 0;
